@@ -96,7 +96,7 @@ GEMINI_TIMEOUT_SECONDS = 15
 def check_api_connection():
     """Test if the backend API is reachable."""
     try:
-        response = requests.get("https://power-saving.onrender.com/api/", timeout=5)
+        response = requests.get("https://power-saving.onrender.com/", timeout=5)
         return response.status_code == 200
     except Exception:
         return False
