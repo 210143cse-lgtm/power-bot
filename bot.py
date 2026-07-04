@@ -242,12 +242,21 @@ def format_data_without_ai(data):
 # ==========================================
 # 5. PROACTIVE ALERTS TASK
 # ==========================================
-@tasks.loop(minutes=1)
+@tasks.loop(minutes=5) # 👈 Changed from 1 to 5 to save your free API quota
 async def proactive_alert_checker():
-    """Polls backend every minute and posts new alerts to Discord."""
-    channel = bot.get_channel(ALERT_CHANNEL_ID)
-    if not channel:
-        print(f"[ALERT CHECKER] ⚠️  Could not find channel ID: {ALERT_CHANNEL_ID}")
+    """Polls backend and posts new alerts to Discord."""
+    
+    # ✅ FIX: Fetch channel directly from Discord API instead of local cache
+    try:
+        channel = await bot.fetch_channel(int(ALERT_CHANNEL_ID))
+    except discord.NotFound:
+        print(f"[ALERT CHECKER] ⚠️  Channel ID {ALERT_CHANNEL_ID} not found! Is the bot in the server?")
+        return
+    except discord.Forbidden:
+        print(f"[ALERT CHECKER] ⚠️  Bot doesn't have permission to view channel {ALERT_CHANNEL_ID}!")
+        return
+    except Exception as e:
+        print(f"[ALERT CHECKER] ❌ Error fetching channel: {e}")
         return
 
     # Fetch alerts in a thread to avoid blocking
@@ -259,6 +268,7 @@ async def proactive_alert_checker():
 
     alerts = data.get('alerts', [])
     for alert in alerts:
+        # ... (keep the rest of your alert logic exactly the same)
         alert_id = f"{alert.get('room', alert['message'][:30])}-{alert['level']}-{datetime.now().hour}"
         if alert_id not in sent_alerts:
             sent_alerts.add(alert_id)
